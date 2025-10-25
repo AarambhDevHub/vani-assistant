@@ -1,0 +1,24 @@
+# Core dependencies
+# openai-whisper
+faster-whisper>=1.0.0
+SpeechRecognition>=3.10.0
+pyttsx3>=2.90
+sounddevice>=0.4.6
+numpy>=1.24.0
+requests>=2.31.0
+pyaudio>=0.2.14
+
+# Additional dependencies for Whisper
+torch>=2.0.0
+torchaudio>=2.0.0
+ffmpeg-python
+
+# TTS
+gtts>=2.3.0
+pygame>=2.5.0
+pydub>=0.25.1
+
+# Web Search
+duckduckgo-search>=5.0.0
+beautifulsoup4>=4.12.0
+wikipedia-api>=0.6.0

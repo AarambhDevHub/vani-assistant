@@ -5,7 +5,7 @@ import json
 from typing import Optional
 from . import config
 from .web_search import WebSearchHandler
-
+from .desktop_automation import DesktopAutomation
 
 class OllamaHandler:
     """Handles communication with Ollama API with web search capability."""
@@ -19,6 +19,9 @@ class OllamaHandler:
         
         # Initialize web search
         self.web_search = WebSearchHandler()
+        
+        # Desktop automation (single unified system)
+        self.desktop = DesktopAutomation()
         
         # Verify Ollama is running
         self._check_connection()
@@ -114,6 +117,13 @@ class OllamaHandler:
         try:
             self.current_language = language
             web_context = ""
+
+            # Try desktop command first
+            desktop_response = self.desktop.execute(user_input, language)
+            
+            if desktop_response:
+                print(f"🖥️  {desktop_response}")
+                return desktop_response
             
             if config.ENABLE_WEB_SEARCH:
                 # Determine search type

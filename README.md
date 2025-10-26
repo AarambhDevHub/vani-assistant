@@ -515,34 +515,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ---
 
-## 🗺️ Roadmap
-
-### Current Features ✅
-- [x] Multilingual support (English, Hindi, Gujarati)
-- [x] faster-whisper integration
-- [x] Ollama LLM support
-- [x] Google TTS with language detection
-- [x] Conversation context management
-- [x] **Web search integration (DuckDuckGo)**
-- [x] **Wikipedia knowledge base**
-- [x] **Real-time news search**
-- [x] **Smart search detection**
-
-### Planned Features 🚀
-- [ ] Offline TTS support (Piper TTS)
-- [ ] Wake word detection ("Hey Vani")
-- [ ] Voice activity detection (continuous listening)
-- [ ] Image search and analysis
-- [ ] Web UI interface
-- [ ] Docker containerization
-- [ ] Multi-user profiles
-- [ ] Smart home integration
-- [ ] Additional Indian languages (Tamil, Telugu, Bengali, Marathi)
-- [ ] Custom voice training
-- [ ] Conversation export/import
-
----
-
 ## ⭐ Star History
 
 If you find Vani useful, please consider giving it a star on GitHub!

@@ -15,7 +15,7 @@ class VisionHandler:
     
     def __init__(self):
         self.camera = None
-        self.vision_model = "moondream"  # Just use "moondream" without version
+        self.vision_model = config.VISION_MODEL
         self.ollama_url = config.OLLAMA_BASE_URL
         
         # Verify Moondream is available

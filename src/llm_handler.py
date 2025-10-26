@@ -6,6 +6,7 @@ from typing import Optional
 from . import config
 from .web_search import WebSearchHandler
 from .desktop_automation import DesktopAutomation
+from .multi_model_handler import MultiModelHandler
 
 class OllamaHandler:
     """Handles communication with Ollama API with web search capability."""
@@ -22,6 +23,9 @@ class OllamaHandler:
         
         # Desktop automation (single unified system)
         self.desktop = DesktopAutomation()
+
+        # Multi-model system (vision + text)
+        self.multi_model = MultiModelHandler()
         
         # Verify Ollama is running
         self._check_connection()
@@ -116,7 +120,13 @@ class OllamaHandler:
         """Generate response with intelligent source selection."""
         try:
             self.current_language = language
-            web_context = ""
+
+            # 1. Check for vision commands first
+            vision_response = self.multi_model.process_vision_command(user_input, language)
+            
+            if vision_response:
+                print(f"👁️  {vision_response}")
+                return vision_response
 
             # Try desktop command first
             desktop_response = self.desktop.execute(user_input, language)
@@ -125,6 +135,7 @@ class OllamaHandler:
                 print(f"🖥️  {desktop_response}")
                 return desktop_response
             
+            web_context = ""
             if config.ENABLE_WEB_SEARCH:
                 # Determine search type
                 is_news = self._needs_web_search(user_input) and any(

@@ -29,19 +29,6 @@ pip install --upgrade pip
 echo "📦 Installing Python packages..."
 pip install -r requirements.txt
 
-# Download Piper voice model
-echo "📥 Downloading Piper TTS voice model..."
-mkdir -p models/voices
-cd models/voices
-
-if [ ! -f "en_US-amy-medium.onnx" ]; then
-    echo "Downloading voice model..."
-    wget "https://huggingface.co/rhasspy/piper-voices/resolve/v1.0.0/en/en_US/amy/medium/en_US-amy-medium.onnx" -O en_US-amy-medium.onnx
-    wget "https://huggingface.co/rhasspy/piper-voices/resolve/v1.0.0/en/en_US/amy/medium/en_US-amy-medium.onnx.json" -O en_US-amy-medium.onnx.json
-else
-    echo "Voice model already exists"
-fi
-
 cd ../..
 
 echo ""

@@ -1,4 +1,4 @@
-# 🎙️ Vani - Multilingual AI Voice Assistant
+# 🎙️ Vani - Multilingual AI Voice Assistant with Desktop Control
 
 <div align="center">
 
@@ -7,9 +7,9 @@
 ![License](https://img.shields.io/badge/License-MIT-yellow)
 ![Status](https://img.shields.io/badge/Status-Production%20Ready-brightgreen)
 
-**Your intelligent, multilingual voice companion with web search powered by local AI**
+**Your intelligent, multilingual voice companion with web search and desktop automation powered by local AI**
 
-[Features](#features) • [Quick Start](#quick-start) • [Installation](#installation) • [Usage](#usage) • [Configuration](#configuration) • [Troubleshooting](#troubleshooting)
+[Features](#features) • [Quick Start](#quick-start) • [Installation](#installation) • [Usage](#usage) • [Desktop Commands](#desktop-commands) • [Configuration](#configuration) • [Troubleshooting](#troubleshooting)
 
 </div>
 
@@ -24,13 +24,26 @@
 - 🌍 **Multilingual Support** - English, Hindi (हिन्दी), Gujarati (ગુજરાતી)
 - 🌐 **Web Search Integration** - Real-time information from DuckDuckGo
 - 📚 **Wikipedia Integration** - Accurate knowledge retrieval
+- 🖥️ **Desktop Automation** - Control your computer with voice commands
 - 🔒 **Privacy First** - AI processing runs 100% locally (except TTS & web search)
 - 💬 **Context-Aware** - Remembers conversation history
 - 🎯 **Auto Language Detection** - Automatically detects and responds in your language
 
+### Desktop Control Features 🆕
+- **Open Applications** - Launch any installed app by voice
+- **Close Applications** - Close running apps
+- **Open Websites** - Open websites in specific browsers
+- **System Information** - Check battery, CPU, memory usage
+- **Screenshots** - Capture your screen
+- **Volume Control** - Adjust system volume
+- **File Search** - Find files on your computer
+- **Smart Command Understanding** - Natural language commands
+
 ### Technical Highlights
-- **Smart Search Detection** - Automatically knows when to search the web
+- **Smart Command Detection** - Automatically knows when to search web or control desktop
 - **Multi-Source Information** - DuckDuckGo + Wikipedia fallback
+- **Intelligent URL Parsing** - Understands "Open YouTube in Firefox"
+- **Process Management** - Reliable app opening and closing
 - **Real-time voice interaction** with minimal latency
 - **Optimized for Consumer Hardware** (8GB RAM, integrated GPU)
 - **Production-Ready** with error handling and recovery
@@ -41,6 +54,9 @@
 ✅ **Answer factual questions** using Wikipedia  
 ✅ **Search the web** for current information  
 ✅ **Get latest news** from multiple sources  
+✅ **Control your desktop** - open apps, websites, files  
+✅ **System monitoring** - battery, CPU, memory  
+✅ **Take screenshots** on command  
 ✅ **Multilingual conversations** in 3 languages  
 ✅ **Context-aware chat** remembering conversation history  
 ✅ **Explain complex topics** with detailed information  
@@ -80,7 +96,7 @@ source venv/bin/activate
 python -m src.main
 ```
 
-That's it! Vani is ready to talk 🎉
+That's it! Vani is ready to talk and control your desktop! 🎉
 
 ---
 
@@ -100,7 +116,8 @@ sudo apt-get install -y \
     espeak-ng \
     ffmpeg \
     build-essential \
-    wget
+    wget \
+    amixer
 ```
 
 #### 2. Install Ollama
@@ -132,14 +149,6 @@ pip install --upgrade pip
 pip install -r requirements.txt
 ```
 
-#### 4. Download Voice Models
-
-```
-# Download faster-whisper model (automatic on first run)
-# Or pre-download for offline use:
-python -c "from faster_whisper import WhisperModel; WhisperModel('medium')"
-```
-
 ---
 
 ## 📁 Project Structure
@@ -155,7 +164,8 @@ vani-assistant/
 │   ├── stt_handler.py            # Speech-to-text (faster-whisper)
 │   ├── llm_handler.py            # LLM integration (Ollama)
 │   ├── tts_google.py             # Text-to-speech (Google TTS)
-│   └── web_search.py             # Web search & Wikipedia integration
+│   ├── web_search.py             # Web search & Wikipedia integration
+│   └── desktop_automation.py     # Desktop control system 🆕
 ├── models/                        # Downloaded voice models (auto-created)
 ├── requirements.txt               # Python dependencies
 ├── setup.sh                       # Automated setup script
@@ -180,65 +190,124 @@ source venv/bin/activate
 python -m src.main
 ```
 
-### Voice Commands
+### Desktop Commands 🆕
 
-#### Basic Interaction
+#### Open Applications
 ```
-You: "Hello Vani!"
-Vani: "Hello! How can I help you today?"
+You: "Open terminal"
+Vani: "Opening terminal"
 
-You: "What is Python?"
-Vani: *Searches Wikipedia* "Python is a high-level programming language..."
+You: "Launch Firefox"
+Vani: "Opening firefox"
 
+You: "Start calculator"
+Vani: "Opening calculator"
+```
+
+#### Open Websites
+```
+You: "Open YouTube in Firefox"
+Vani: "Opening youtube.com in firefox"
+
+You: "Go to Google"
+Vani: "Opening google.com in default browser"
+
+You: "Visit GitHub in Chrome"
+Vani: "Opening github.com in chrome"
+```
+
+#### Close Applications
+```
+You: "Close terminal"
+Vani: "Closed terminal"
+
+You: "Quit Firefox"
+Vani: "Closed firefox"
+
+You: "Exit Chrome"
+Vani: "Closed chrome"
+```
+
+#### System Commands
+```
+You: "Take a screenshot"
+Vani: "Screenshot saved to /home/user/Pictures/screenshot_20251026_103045.png"
+
+You: "What's my battery level?"
+Vani: "Battery: 75% (on battery)"
+
+You: "Check system status"
+Vani: "CPU: 45%, Memory: 60%, Battery: 75%"
+
+You: "Volume up"
+Vani: "Volume increased"
+
+You: "Mute volume"
+Vani: "Volume muted"
+```
+
+### Web Search Examples
+
+```
 You: "Latest news about India"
 Vani: *Searches web* "According to recent reports..."
 
-You: "Thank you, goodbye"
-Vani: "Goodbye! Vani signing off."
-```
-
-#### Web Search Examples
-
-```
-You: "What's the weather in Mumbai today?"
-Vani: *Searches web* "According to current reports, Mumbai has..."
-
-You: "Who won the cricket match?"
-Vani: *Searches news* "In the recent match..."
+You: "What's the weather in Mumbai?"
+Vani: *Searches web* "Current weather in Mumbai..."
 
 You: "Bitcoin price now"
 Vani: *Searches web* "The current Bitcoin price is..."
 ```
 
-#### Multilingual Conversations
+### Knowledge Queries
+
+```
+You: "What is Python?"
+Vani: *Searches Wikipedia* "Python is a high-level programming language..."
+
+You: "Who is Mahatma Gandhi?"
+Vani: *Searches Wikipedia* "Mahatma Gandhi was an Indian lawyer..."
+```
+
+### Multilingual Conversations
 
 **English:**
 ```
 You: "Hello Vani, who are you?"
-Vani: "I am Vani, your multilingual AI voice assistant with web search capability!"
+Vani: "I am Vani, your multilingual AI voice assistant with web search and desktop control!"
 ```
 
 **Hindi (हिन्दी):**
 ```
+You: "टर्मिनल खोलो"
+Vani: "terminal खोल दिया"
+
 You: "आज की ताज़ा खबर क्या है?"
 Vani: *वेब खोज* "हाल की रिपोर्टों के अनुसार..."
 ```
 
 **Gujarati (ગુજરાતી):**
 ```
+You: "ટર્મિનલ ખોલો"
+Vani: "terminal ખોલ્યું"
+
 You: "મુંબઈમાં હવામાન કેવું છે?"
-Vani: *વેબ શોધ* "વર્તમાન અહેવાલો અનુસાર..."
+Vani: *વેબ શોધ* "વર્તમાન હવામાન..."
 ```
 
-### Special Commands
+### Voice Commands Reference
 
-| Command | Description | Languages |
-|---------|-------------|-----------|
-| `"who are you"` / `"तुम कौन हो"` / `"તમે કોણ છો"` | Ask about Vani's identity | All |
-| `"goodbye"` / `"अलविदा"` / `"અલવિદા"` | Exit the application | All |
-| `"reset"` / `"रीसेट"` / `"રીસેટ"` | Clear conversation history | All |
-| `"latest news"` / `"ताज़ा खबर"` / `"તાજા સમાચાર"` | Search for news | All |
-| `Ctrl+C` | Force quit | - |
+| Category | Commands | Languages |
+|----------|----------|-----------|
+| **Apps** | "open/launch/start [app]" | All |
+| **Websites** | "open/go to [site] in [browser]" | All |
+| **Close** | "close/quit/exit [app]" | All |
+| **Screenshot** | "take screenshot/capture screen" | All |
+| **System** | "battery/cpu/memory/system status" | All |
+| **Volume** | "volume up/down/mute" | All |
+| **Identity** | "who are you" | All |
+| **Exit** | "goodbye/bye/exit" | All |
+| **Reset** | "reset conversation" | All |
 
 ---
 
@@ -264,123 +333,87 @@ WHISPER_MODEL = "medium"           # Options: tiny, base, small, medium, large
 ENABLE_WEB_SEARCH = True           # Enable/disable web search
 WEB_SEARCH_MAX_RESULTS = 5         # Number of search results
 
+# Desktop Automation
+ENABLE_DESKTOP_CONTROL = True      # Enable/disable desktop automation
+
 # Audio Settings
 SILENCE_THRESHOLD = 3000           # Microphone sensitivity
 RECORD_SECONDS = 10                # Maximum recording duration
 ```
 
-### Popular Name Suggestions
-
-| Name | Meaning | Script |
-|------|---------|--------|
-| **Vani** ⭐ | Voice | वाणी / વાણી |
-| **Saral** | Simple/Easy | सरल / સરળ |
-| **Mitra** | Friend | मित्र / મિત્ર |
-| **Bodhi** | Enlightenment | बोधि / બોધિ |
-| **Aria** | Musical/Air | - |
-| **Echo** | Tech-inspired | - |
-
 ### Model Comparison
 
-| Model | Size | Speed | Quality | Multilingual | Best For |
-|-------|------|-------|---------|--------------|----------|
-| **llama3.2:3b** ⭐ | 2GB | Fast | Excellent | ⭐⭐⭐⭐⭐ | **Recommended** |
-| llama3.3:1b | 1GB | Very Fast | Very Good | ⭐⭐⭐⭐ | Low-resource systems |
-| phi3:latest | 2.3GB | Medium | Good | ⭐⭐ | English-focused |
-| gemma2:2b | 1.5GB | Fast | Very Good | ⭐⭐⭐⭐⭐ | 140+ languages |
+| Model | Size | Speed | Quality | Multilingual | Desktop | Best For |
+|-------|------|-------|---------|--------------|---------|----------|
+| **llama3.2:3b** ⭐ | 2GB | Fast | Excellent | ⭐⭐⭐⭐⭐ | ✅ | **Recommended** |
+| llama3.3:1b | 1GB | Very Fast | Very Good | ⭐⭐⭐⭐ | ✅ | Low-resource systems |
+| phi3:latest | 2.3GB | Medium | Good | ⭐⭐ | ✅ | English-focused |
+| gemma2:2b | 1.5GB | Fast | Very Good | ⭐⭐⭐⭐⭐ | ✅ | 140+ languages |
 
 ---
 
 ## 🔧 Troubleshooting
 
-### Common Issues
+### Desktop Control Issues
 
-#### ❌ Web Search Timeout
+#### ❌ Application Won't Open
+
+**Problem:** Desktop commands not working
+
+**Solution:**
+```
+# Verify application is installed
+which firefox  # Should show path if installed
+
+# Install missing applications
+sudo apt-get install firefox gnome-terminal nautilus
+
+# Check desktop_automation.py apps dictionary
+# Add custom applications if needed
+```
+
+#### ❌ Website Won't Open
+
+**Problem:** "Could not open website"
+
+**Solution:**
+- Ensure default browser is set: `xdg-settings set default-web-browser firefox.desktop`
+- Try specifying browser: "Open YouTube **in Firefox**"
+
+#### ❌ Can't Close Application
+
+**Problem:** Application still running after close command
+
+**Solution:**
+- The app might have a different process name
+- Use: `ps aux | grep [app-name]` to find actual process name
+- Update `proc_map` in `desktop_automation.py`
+
+### Web Search Timeout
 
 **Problem:** `DuckDuckGo search failed: operation timed out`
 
 **Solution:**
 ```
 # In src/web_search.py, increase timeout
-self.ddgs = DDGS(timeout=20)  # Increase from default 10 to 20 seconds
+self.ddgs = DDGS(timeout=30)  # Increase from 20 to 30 seconds
 ```
 
-#### ❌ Wikipedia Not Found
-
-**Problem:** Wikipedia returns no results
-
-**Solution:**
-- Vani automatically falls back to web search
-- Wikipedia works best for factual "what is" questions
-- Try rephrasing: "What is Python?" instead of "Tell me Python"
-
-#### ❌ Microphone Not Detected
-
-**Problem:** No audio input detected
-
-**Solution:**
-```
-# Test your microphone
-arecord -d 5 test.wav
-aplay test.wav
-
-# Check available devices
-python -c "import speech_recognition as sr; print(sr.Microphone.list_microphone_names())"
-
-# Install PulseAudio controls
-sudo apt-get install pavucontrol
-pavucontrol  # Adjust input device
-```
-
-#### ❌ Ollama Connection Error
-
-**Problem:** `Cannot connect to Ollama`
-
-**Solution:**
-```
-# Check if Ollama is running
-curl http://localhost:11434/api/tags
-
-# Start Ollama
-ollama serve
-
-# Verify model is available
-ollama list
-```
-
-#### ❌ Poor Speech Recognition
+### Poor Speech Recognition
 
 **Problem:** Whisper not transcribing correctly
 
 **Solutions:**
 1. **Speak closer to microphone** (6-12 inches)
-2. **Reduce background noise** (turn off fans, music)
+2. **Reduce background noise**
 3. **Upgrade Whisper model:**
    ```
-   # In config.py
-   WHISPER_MODEL = "large"  # Better accuracy but slower
+   WHISPER_MODEL = "large"  # In config.py
    ```
 4. **Adjust microphone sensitivity:**
    ```
-   # In config.py
    SILENCE_THRESHOLD = 4000  # Higher = require louder speech
    ```
-
-#### ❌ TTS Not Working
-
-**Problem:** No audio output from text-to-speech
-
-**Solution:**
-```
-# Check internet connection (gTTS requires internet)
-ping -c 3 google.com
-
-# Install pygame dependencies
-sudo apt-get install python3-pygame
-
-# Test pygame
-python -c "import pygame; pygame.mixer.init(); print('OK')"
-```
 
 ### Performance Optimization
 
@@ -399,7 +432,6 @@ WEB_SEARCH_MAX_RESULTS = 3       # Fewer search results
 # In config.py
 WHISPER_MODEL = "medium"         # or "large" if you have 16GB+ RAM
 OLLAMA_MODEL = "llama3.2:3b"     # Best multilingual support
-WEB_SEARCH_MAX_RESULTS = 5       # More comprehensive results
 ```
 
 ---
@@ -450,39 +482,13 @@ pygame>=2.5.0
 duckduckgo-search>=5.0.0
 beautifulsoup4>=4.12.0
 wikipedia-api>=0.6.0
+
+# Desktop Automation
+pyautogui>=0.9.54
+pynput>=1.7.6
+psutil>=5.9.0
+pillow>=10.0.0
 ```
-
----
-
-## 🤝 Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
-
-### Development Setup
-
-```
-# Fork and clone the repository
-git clone https://github.com/yourusername/vani-assistant.git
-cd vani-assistant
-
-# Create a new branch
-git checkout -b feature/your-feature-name
-
-# Make your changes and commit
-git add .
-git commit -m "Add your feature"
-
-# Push to your fork
-git push origin feature/your-feature-name
-
-# Create a Pull Request
-```
-
----
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ---
 
@@ -495,23 +501,14 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - **faster-whisper** - Optimized Whisper implementation
 - **DuckDuckGo** - Web search API
 - **Wikipedia** - Knowledge base
+- **PyAutoGUI** - Desktop automation
+- **psutil** - System monitoring
 
 ---
 
-## 📧 Support
+## 📄 License
 
-### Getting Help
-
-- 📖 Check the [Troubleshooting](#troubleshooting) section
-- 💬 Open an [Issue](https://github.com/yourusername/vani-assistant/issues)
-- 📧 Email: your.email@example.com
-
-### Resources
-
-- [Ollama Documentation](https://ollama.com/docs)
-- [Whisper Documentation](https://github.com/openai/whisper)
-- [faster-whisper GitHub](https://github.com/SYSTRAN/faster-whisper)
-- [DuckDuckGo Search](https://github.com/deedy5/duckduckgo_search)
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ---
 
@@ -525,8 +522,8 @@ If you find Vani useful, please consider giving it a star on GitHub!
 
 **Made with ❤️ for the open-source community**
 
-*Empowering multilingual voice interactions with local AI and web search*
+*Empowering multilingual voice interactions with local AI, web search, and desktop automation*
 
-[⬆ Back to Top](#-vani---multilingual-ai-voice-assistant)
+[⬆ Back to Top](#-vani---multilingual-ai-voice-assistant-with-desktop-control)
 
 </div>

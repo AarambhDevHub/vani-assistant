@@ -1,4 +1,4 @@
-# 🎙️ Vani - Multilingual AI Voice Assistant with Desktop Control
+# 🎙️ Vani - Multilingual AI Voice Assistant with Vision
 
 <div align="center">
 
@@ -7,9 +7,9 @@
 ![License](https://img.shields.io/badge/License-MIT-yellow)
 ![Status](https://img.shields.io/badge/Status-Production%20Ready-brightgreen)
 
-**Your intelligent, multilingual voice companion with web search and desktop automation powered by local AI**
+**Your intelligent, multilingual voice companion with vision, web search and desktop automation powered by local AI**
 
-[Features](#features) • [Quick Start](#quick-start) • [Installation](#installation) • [Usage](#usage) • [Desktop Commands](#desktop-commands) • [Configuration](#configuration) • [Troubleshooting](#troubleshooting)
+[Features](#features) • [Quick Start](#quick-start) • [Installation](#installation) • [Usage](#usage) • [Vision Commands](#vision-commands) • [Desktop Commands](#desktop-commands) • [Configuration](#configuration)
 
 </div>
 
@@ -19,17 +19,28 @@
 
 ### Core Capabilities
 - 🎤 **Advanced Speech Recognition** - faster-whisper (4x faster than standard Whisper)
-- 🤖 **Local AI Processing** - Powered by Ollama (Llama 3.2 3B / Llama 3.3 1B)
+- 🤖 **Dual AI Models** - Llama 3.2 3B for conversation + Moondream for vision
+- 👁️ **Computer Vision** - See through camera and understand images 🆕
 - 🔊 **Natural Text-to-Speech** - Google TTS with language-specific accents
 - 🌍 **Multilingual Support** - English, Hindi (हिन्दी), Gujarati (ગુજરાતી)
 - 🌐 **Web Search Integration** - Real-time information from DuckDuckGo
 - 📚 **Wikipedia Integration** - Accurate knowledge retrieval
 - 🖥️ **Desktop Automation** - Control your computer with voice commands
 - 🔒 **Privacy First** - AI processing runs 100% locally (except TTS & web search)
-- 💬 **Context-Aware** - Remembers conversation history
+- 💬 **Context-Aware** - Remembers conversation and visual context
 - 🎯 **Auto Language Detection** - Automatically detects and responds in your language
 
-### Desktop Control Features 🆕
+### Vision Capabilities 🆕
+- **See and Describe** - Camera access with intelligent image analysis
+- **Object Recognition** - Identify and count objects, people
+- **Text Reading** - Read text, signs, labels from camera
+- **Time Reading** - Read time from clocks and watches
+- **Color Detection** - Identify and describe colors
+- **Scene Understanding** - Understand location and context
+- **Multilingual Vision** - Vision responses in 3 languages
+- **Smart Question Answering** - Ask anything about what camera sees
+
+### Desktop Control Features
 - **Open Applications** - Launch any installed app by voice
 - **Close Applications** - Close running apps
 - **Open Websites** - Open websites in specific browsers
@@ -40,26 +51,27 @@
 - **Smart Command Understanding** - Natural language commands
 
 ### Technical Highlights
-- **Smart Command Detection** - Automatically knows when to search web or control desktop
-- **Multi-Source Information** - DuckDuckGo + Wikipedia fallback
-- **Intelligent URL Parsing** - Understands "Open YouTube in Firefox"
-- **Process Management** - Reliable app opening and closing
-- **Real-time voice interaction** with minimal latency
+- **Multi-Model Architecture** - Moondream (vision) + Llama 3.2 (text)
+- **Smart Command Detection** - Auto-activates camera when needed
+- **Vision Context Memory** - Remembers what it saw for follow-up questions
+- **Multi-Source Information** - DuckDuckGo + Wikipedia + Camera
+- **Intelligent URL Parsing** - Understands complex commands
+- **Real-time Processing** with minimal latency
 - **Optimized for Consumer Hardware** (8GB RAM, integrated GPU)
 - **Production-Ready** with error handling and recovery
-- **Cross-platform** (Ubuntu/Linux focus, adaptable to other OS)
 
 ### What Can Vani Do?
 
-✅ **Answer factual questions** using Wikipedia  
+✅ **See and understand** through your camera  
+✅ **Read text, time, prices** from images  
+✅ **Count people and objects** in view  
+✅ **Answer questions** about visual content  
 ✅ **Search the web** for current information  
 ✅ **Get latest news** from multiple sources  
-✅ **Control your desktop** - open apps, websites, files  
+✅ **Control your desktop** - apps, websites, files  
 ✅ **System monitoring** - battery, CPU, memory  
-✅ **Take screenshots** on command  
 ✅ **Multilingual conversations** in 3 languages  
-✅ **Context-aware chat** remembering conversation history  
-✅ **Explain complex topics** with detailed information  
+✅ **Context-aware chat** with visual memory  
 
 ---
 
@@ -69,10 +81,11 @@
 
 - **OS**: Ubuntu 20.04+ (or any Linux distribution)
 - **Python**: 3.8 or higher
-- **RAM**: 8GB minimum (16GB recommended)
-- **Storage**: 5GB free space for models
+- **RAM**: 8GB minimum (16GB recommended for vision)
+- **Storage**: 7GB free space for models
 - **Internet**: Required for initial setup, TTS, and web search
 - **Microphone**: Any USB or built-in microphone
+- **Camera**: Webcam for vision features 🆕
 
 ### One-Command Setup
 
@@ -88,15 +101,16 @@ chmod +x setup.sh
 # Start Ollama (in separate terminal)
 ollama serve
 
-# Pull the AI model (recommended)
-ollama pull llama3.2:3b
+# Pull the AI models
+ollama pull llama3.2:3b    # For conversation
+ollama pull moondream      # For vision 🆕
 
 # Activate environment and launch Vani
 source venv/bin/activate
 python -m src.main
 ```
 
-That's it! Vani is ready to talk and control your desktop! 🎉
+That's it! Vani is ready to see, talk and control your desktop! 🎉
 
 ---
 
@@ -117,10 +131,11 @@ sudo apt-get install -y \
     ffmpeg \
     build-essential \
     wget \
-    amixer
+    amixer \
+    v4l-utils  # Camera tools
 ```
 
-#### 2. Install Ollama
+#### 2. Install Ollama & Models
 
 ```
 # Install Ollama
@@ -129,24 +144,19 @@ curl -fsSL https://ollama.com/install.sh | sh
 # Start Ollama service
 ollama serve
 
-# In another terminal, pull the model
-ollama pull llama3.2:3b
+# Pull models
+ollama pull llama3.2:3b    # Text/conversation model
+ollama pull moondream      # Vision model 🆕
 ```
 
-#### 3. Project Setup
+#### 3. Test Camera
 
 ```
-# Create project directory
-mkdir vani-assistant
-cd vani-assistant
+# Check if camera is detected
+ls /dev/video*
 
-# Create virtual environment
-python3 -m venv venv
-source venv/bin/activate
-
-# Install Python dependencies
-pip install --upgrade pip
-pip install -r requirements.txt
+# Test camera (optional)
+ffplay /dev/video0
 ```
 
 ---
@@ -164,12 +174,12 @@ vani-assistant/
 │   ├── stt_handler.py            # Speech-to-text (faster-whisper)
 │   ├── llm_handler.py            # LLM integration (Ollama)
 │   ├── tts_google.py             # Text-to-speech (Google TTS)
-│   ├── web_search.py             # Web search & Wikipedia integration
-│   └── desktop_automation.py     # Desktop control system 🆕
-├── models/                        # Downloaded voice models (auto-created)
+│   ├── web_search.py             # Web search & Wikipedia
+│   ├── desktop_automation.py     # Desktop control
+│   ├── vision_handler.py         # Camera & vision 🆕
+│   └── multi_model_handler.py    # Vision + Text coordination 🆕
 ├── requirements.txt               # Python dependencies
 ├── setup.sh                       # Automated setup script
-├── .gitignore                     # Git ignore file
 └── README.md                      # This file
 ```
 
@@ -190,7 +200,62 @@ source venv/bin/activate
 python -m src.main
 ```
 
-### Desktop Commands 🆕
+### Vision Commands 🆕
+
+#### Basic Vision
+```
+You: "What do you see?"
+Vani: *Activates camera* "I can see: A person sitting at a desk with a laptop..."
+
+You: "Describe what you see"
+Vani: *Captures and analyzes* "Looking at the camera: A room with blue walls..."
+```
+
+#### Reading Text & Time
+```
+You: "What time does the clock show?"
+Vani: *Reads clock* "I can see: The clock shows 3:30 PM"
+
+You: "Read the text on the screen"
+Vani: *Reads text* "I can see: The screen displays 'Welcome to Ubuntu'"
+
+You: "What's written on the paper?"
+Vani: *Reads paper* "I can see: The paper says 'Meeting at 5 PM'"
+```
+
+#### Counting & Recognition
+```
+You: "How many people are in the room?"
+Vani: *Counts people* "I can see: There are 2 people in this image"
+
+You: "How many chairs do you see?"
+Vani: *Counts objects* "I can see: There are 3 chairs visible"
+
+You: "What color is the wall?"
+Vani: *Analyzes colors* "I can see: The wall is blue"
+```
+
+#### Multilingual Vision
+
+**Hindi:**
+```
+You: "क्या दिख रहा है?"
+Vani: "मैं देख रहा हूं: एक व्यक्ति कंप्यूटर पर काम कर रहा है..."
+
+You: "घड़ी में क्या समय है?"
+Vani: "मैं देख रहा हूं: घड़ी 3:30 बजे दिखा रही है"
+```
+
+**Gujarati:**
+```
+You: "તમે શું જુઓ છો?"
+Vani: "હું જોઈ રહ્યો છું: એક વ્યક્તિ ડેસ્ક પર બેઠો છે..."
+
+You: "ઘડિયાળમાં કેટલો સમય છે?"
+Vani: "હું જોઈ રહ્યો છું: ઘડિયાળ 3:30 બતાવે છે"
+```
+
+### Desktop Commands
 
 #### Open Applications
 ```
@@ -199,9 +264,6 @@ Vani: "Opening terminal"
 
 You: "Launch Firefox"
 Vani: "Opening firefox"
-
-You: "Start calculator"
-Vani: "Opening calculator"
 ```
 
 #### Open Websites
@@ -210,104 +272,54 @@ You: "Open YouTube in Firefox"
 Vani: "Opening youtube.com in firefox"
 
 You: "Go to Google"
-Vani: "Opening google.com in default browser"
-
-You: "Visit GitHub in Chrome"
-Vani: "Opening github.com in chrome"
-```
-
-#### Close Applications
-```
-You: "Close terminal"
-Vani: "Closed terminal"
-
-You: "Quit Firefox"
-Vani: "Closed firefox"
-
-You: "Exit Chrome"
-Vani: "Closed chrome"
+Vani: "Opening google.com"
 ```
 
 #### System Commands
 ```
 You: "Take a screenshot"
-Vani: "Screenshot saved to /home/user/Pictures/screenshot_20251026_103045.png"
+Vani: "Screenshot saved to /home/user/Pictures/..."
 
 You: "What's my battery level?"
 Vani: "Battery: 75% (on battery)"
 
-You: "Check system status"
-Vani: "CPU: 45%, Memory: 60%, Battery: 75%"
-
 You: "Volume up"
 Vani: "Volume increased"
-
-You: "Mute volume"
-Vani: "Volume muted"
 ```
 
-### Web Search Examples
+### Web Search & Knowledge
 
 ```
 You: "Latest news about India"
 Vani: *Searches web* "According to recent reports..."
 
-You: "What's the weather in Mumbai?"
-Vani: *Searches web* "Current weather in Mumbai..."
-
-You: "Bitcoin price now"
-Vani: *Searches web* "The current Bitcoin price is..."
-```
-
-### Knowledge Queries
-
-```
 You: "What is Python?"
-Vani: *Searches Wikipedia* "Python is a high-level programming language..."
-
-You: "Who is Mahatma Gandhi?"
-Vani: *Searches Wikipedia* "Mahatma Gandhi was an Indian lawyer..."
+Vani: *Searches Wikipedia* "Python is a programming language..."
 ```
 
-### Multilingual Conversations
+### Combined Vision + Conversation
 
-**English:**
 ```
-You: "Hello Vani, who are you?"
-Vani: "I am Vani, your multilingual AI voice assistant with web search and desktop control!"
-```
+You: "What do you see?"
+Vani: "I can see: A laptop showing code on the screen"
 
-**Hindi (हिन्दी):**
-```
-You: "टर्मिनल खोलो"
-Vani: "terminal खोल दिया"
+You: "What programming language is that?"
+Vani: *Uses vision context* "Based on what I see, it appears to be Python code"
 
-You: "आज की ताज़ा खबर क्या है?"
-Vani: *वेब खोज* "हाल की रिपोर्टों के अनुसार..."
-```
-
-**Gujarati (ગુજરાતી):**
-```
-You: "ટર્મિનલ ખોલો"
-Vani: "terminal ખોલ્યું"
-
-You: "મુંબઈમાં હવામાન કેવું છે?"
-Vani: *વેબ શોધ* "વર્તમાન હવામાન..."
+You: "What color is the laptop?"
+Vani: *Remembers previous image* "The laptop appears to be silver/gray"
 ```
 
 ### Voice Commands Reference
 
-| Category | Commands | Languages |
-|----------|----------|-----------|
-| **Apps** | "open/launch/start [app]" | All |
-| **Websites** | "open/go to [site] in [browser]" | All |
-| **Close** | "close/quit/exit [app]" | All |
-| **Screenshot** | "take screenshot/capture screen" | All |
-| **System** | "battery/cpu/memory/system status" | All |
-| **Volume** | "volume up/down/mute" | All |
-| **Identity** | "who are you" | All |
-| **Exit** | "goodbye/bye/exit" | All |
-| **Reset** | "reset conversation" | All |
+| Category | Commands | Languages | Model |
+|----------|----------|-----------|-------|
+| **Vision** | "what do you see/time/read/count" | All | Moondream 🆕 |
+| **Web Search** | "latest news/weather/search" | All | DuckDuckGo |
+| **Knowledge** | "what is/who is/explain" | All | Wikipedia + Llama |
+| **Apps** | "open/launch/start [app]" | All | Desktop |
+| **Websites** | "open [site] in [browser]" | All | Desktop |
+| **System** | "screenshot/battery/volume" | All | Desktop |
 
 ---
 
@@ -315,105 +327,81 @@ Vani: *વેબ શોધ* "વર્તમાન હવામાન..."
 
 ### Customize Vani
 
-Edit `src/config.py` to personalize your assistant:
+Edit `src/config.py`:
 
 ```
 # Assistant Identity
-ASSISTANT_NAME = "Vani"           # Change to your preferred name
-ASSISTANT_NAME_HI = "वाणी"        # Hindi name
-ASSISTANT_NAME_GU = "વાણી"        # Gujarati name
+ASSISTANT_NAME = "Vani"
+ASSISTANT_NAME_HI = "वाणी"
+ASSISTANT_NAME_GU = "વાણી"
 
-# AI Model Selection
-OLLAMA_MODEL = "llama3.2:3b"      # Options: llama3.2:3b, llama3.3:1b, phi3:latest
+# AI Models
+OLLAMA_MODEL = "llama3.2:3b"      # Text/conversation
+VISION_MODEL = "moondream"         # Vision 🆕
 
-# Speech Recognition Model
-WHISPER_MODEL = "medium"           # Options: tiny, base, small, medium, large
+# Speech Recognition
+WHISPER_MODEL = "medium"           # tiny/base/small/medium/large
 
-# Web Search Settings
-ENABLE_WEB_SEARCH = True           # Enable/disable web search
-WEB_SEARCH_MAX_RESULTS = 5         # Number of search results
+# Features
+ENABLE_WEB_SEARCH = True
+ENABLE_DESKTOP_CONTROL = True
+ENABLE_VISION = True               # 🆕
 
-# Desktop Automation
-ENABLE_DESKTOP_CONTROL = True      # Enable/disable desktop automation
+# Camera
+CAMERA_INDEX = 0                   # 0 for default camera 🆕
 
-# Audio Settings
-SILENCE_THRESHOLD = 3000           # Microphone sensitivity
-RECORD_SECONDS = 10                # Maximum recording duration
+# Audio
+SILENCE_THRESHOLD = 3000
+RECORD_SECONDS = 10
 ```
 
-### Model Comparison
+### Model Options
 
-| Model | Size | Speed | Quality | Multilingual | Desktop | Best For |
-|-------|------|-------|---------|--------------|---------|----------|
-| **llama3.2:3b** ⭐ | 2GB | Fast | Excellent | ⭐⭐⭐⭐⭐ | ✅ | **Recommended** |
-| llama3.3:1b | 1GB | Very Fast | Very Good | ⭐⭐⭐⭐ | ✅ | Low-resource systems |
-| phi3:latest | 2.3GB | Medium | Good | ⭐⭐ | ✅ | English-focused |
-| gemma2:2b | 1.5GB | Fast | Very Good | ⭐⭐⭐⭐⭐ | ✅ | 140+ languages |
+| Model | Type | Size | Purpose | Best For |
+|-------|------|------|---------|----------|
+| **llama3.2:3b** ⭐ | Text | 2GB | Conversation | Multilingual chat |
+| llama3.3:1b | Text | 1GB | Conversation | Low-resource systems |
+| deepseek-r1:1.5b | Text | 1GB | Reasoning | Complex questions |
+| **moondream** ⭐ | Vision | 1.7GB | Image analysis | Vision tasks 🆕 |
 
 ---
 
 ## 🔧 Troubleshooting
 
-### Desktop Control Issues
+### Vision Issues 🆕
 
-#### ❌ Application Won't Open
+#### ❌ Camera Not Detected
 
-**Problem:** Desktop commands not working
-
-**Solution:**
 ```
-# Verify application is installed
-which firefox  # Should show path if installed
+# Check camera devices
+ls /dev/video*
 
-# Install missing applications
-sudo apt-get install firefox gnome-terminal nautilus
+# Test camera
+ffplay /dev/video0
 
-# Check desktop_automation.py apps dictionary
-# Add custom applications if needed
+# Install camera tools
+sudo apt-get install v4l-utils
+v4l2-ctl --list-devices
 ```
 
-#### ❌ Website Won't Open
+#### ❌ Moondream Not Found
 
-**Problem:** "Could not open website"
-
-**Solution:**
-- Ensure default browser is set: `xdg-settings set default-web-browser firefox.desktop`
-- Try specifying browser: "Open YouTube **in Firefox**"
-
-#### ❌ Can't Close Application
-
-**Problem:** Application still running after close command
-
-**Solution:**
-- The app might have a different process name
-- Use: `ps aux | grep [app-name]` to find actual process name
-- Update `proc_map` in `desktop_automation.py`
-
-### Web Search Timeout
-
-**Problem:** `DuckDuckGo search failed: operation timed out`
-
-**Solution:**
 ```
-# In src/web_search.py, increase timeout
-self.ddgs = DDGS(timeout=30)  # Increase from 20 to 30 seconds
+# Pull Moondream model
+ollama pull moondream
+
+# Verify it's available
+ollama list | grep moondream
 ```
 
-### Poor Speech Recognition
+#### ❌ Vision Commands Not Working
 
-**Problem:** Whisper not transcribing correctly
+**Problem:** Camera doesn't activate when asking vision questions
 
-**Solutions:**
-1. **Speak closer to microphone** (6-12 inches)
-2. **Reduce background noise**
-3. **Upgrade Whisper model:**
-   ```
-   WHISPER_MODEL = "large"  # In config.py
-   ```
-4. **Adjust microphone sensitivity:**
-   ```
-   SILENCE_THRESHOLD = 4000  # Higher = require louder speech
-   ```
+**Solution:**
+- Make sure `ENABLE_VISION = True` in config.py
+- Use trigger phrases: "what do you see", "look at this", "how many"
+- Check camera permissions: `sudo usermod -a -G video $USER`
 
 ### Performance Optimization
 
@@ -421,17 +409,18 @@ self.ddgs = DDGS(timeout=30)  # Increase from 20 to 30 seconds
 
 ```
 # In config.py
-WHISPER_MODEL = "small"          # Use smaller model
-OLLAMA_MODEL = "llama3.3:1b"     # Use 1B parameter model
-WEB_SEARCH_MAX_RESULTS = 3       # Fewer search results
+WHISPER_MODEL = "small"
+OLLAMA_MODEL = "llama3.3:1b"
+VISION_MODEL = "moondream"  # Already optimized
 ```
 
-#### For Better Accuracy
+#### For 16GB+ RAM Systems
 
 ```
 # In config.py
-WHISPER_MODEL = "medium"         # or "large" if you have 16GB+ RAM
-OLLAMA_MODEL = "llama3.2:3b"     # Best multilingual support
+WHISPER_MODEL = "large"
+OLLAMA_MODEL = "llama3.2:3b"
+VISION_MODEL = "moondream"
 ```
 
 ---
@@ -441,20 +430,16 @@ OLLAMA_MODEL = "llama3.2:3b"     # Best multilingual support
 ### Minimum Requirements
 - **CPU:** Intel Core i5 (8th gen) or AMD Ryzen 5
 - **RAM:** 8GB
-- **Storage:** 5GB free space
+- **Storage:** 7GB free space
+- **Camera:** Any USB or integrated webcam 🆕
 - **Internet:** For TTS and web search
 
 ### Recommended Requirements
 - **CPU:** Intel Core i7 or AMD Ryzen 7
 - **RAM:** 16GB
 - **Storage:** 10GB free space
-- **Internet:** Broadband connection
-
-### Tested Systems
-- ✅ ASUS VivoBook 14 (Intel i5-1135G7, 8GB RAM) - **Works Great**
-- ✅ Ubuntu 20.04 LTS
-- ✅ Ubuntu 22.04 LTS
-- ✅ Ubuntu 24.04 LTS
+- **Camera:** 720p or better webcam 🆕
+- **GPU:** Optional (CUDA for faster processing)
 
 ---
 
@@ -488,33 +473,28 @@ pyautogui>=0.9.54
 pynput>=1.7.6
 psutil>=5.9.0
 pillow>=10.0.0
-```
 
----
+# Vision 🆕
+opencv-python>=4.8.0
+```
 
 ## 🙏 Acknowledgments
 
-- **OpenAI Whisper** - Speech recognition technology
+- **OpenAI Whisper** - Speech recognition
 - **Ollama** - Local LLM inference
-- **Meta Llama** - Open-source language models
-- **Google TTS** - Text-to-speech synthesis
-- **faster-whisper** - Optimized Whisper implementation
-- **DuckDuckGo** - Web search API
+- **Meta Llama** - Language models
+- **Moondream** - Vision model 🆕
+- **Google TTS** - Text-to-speech
+- **faster-whisper** - Optimized Whisper
+- **DuckDuckGo** - Web search
 - **Wikipedia** - Knowledge base
-- **PyAutoGUI** - Desktop automation
-- **psutil** - System monitoring
+- **OpenCV** - Computer vision 🆕
 
 ---
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
----
-
-## ⭐ Star History
-
-If you find Vani useful, please consider giving it a star on GitHub!
+MIT License - see [LICENSE](LICENSE) file
 
 ---
 
@@ -522,8 +502,8 @@ If you find Vani useful, please consider giving it a star on GitHub!
 
 **Made with ❤️ for the open-source community**
 
-*Empowering multilingual voice interactions with local AI, web search, and desktop automation*
+*Empowering multilingual voice interactions with vision, local AI, web search, and desktop automation*
 
-[⬆ Back to Top](#-vani---multilingual-ai-voice-assistant-with-desktop-control)
+[⬆ Back to Top](#-vani---multilingual-ai-voice-assistant-with-vision)
 
 </div>

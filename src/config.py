@@ -12,6 +12,11 @@ OLLAMA_BASE_URL = "http://localhost:11434"
 OLLAMA_MODEL = "llama3.2:3b"
 OLLAMA_API_ENDPOINT = f"{OLLAMA_BASE_URL}/api/generate"
 
+# Vision settings
+ENABLE_VISION = True
+VISION_MODEL = "moondream:latest"  # or "moondream:v2"
+CAMERA_INDEX = 0  # 0 for default camera
+
 # faster-whisper settings
 WHISPER_MODEL = "medium"
 
@@ -27,7 +32,7 @@ TTS_RATE = 160
 TTS_VOLUME = 0.9
 
 # Web Search settings
-ENABLE_WEB_SEARCH = True  # Set to False to disable web search
+ENABLE_WEB_SEARCH = False  # Set to False to disable web search
 WEB_SEARCH_MAX_RESULTS = 3
 
 # System prompt with web search capability

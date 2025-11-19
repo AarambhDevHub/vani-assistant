@@ -6,15 +6,16 @@ import os
 ASSISTANT_NAME = "Vani"
 ASSISTANT_NAME_HI = "वाणी"
 ASSISTANT_NAME_GU = "વાણી"
+ASSISTANT_NAME_GU = "વાણી"
 
 # Ollama settings
 OLLAMA_BASE_URL = "http://localhost:11434"
-OLLAMA_MODEL = "llama3.2:3b"
+OLLAMA_MODEL = "llama3.2:3b"  # Updated to match README
 OLLAMA_API_ENDPOINT = f"{OLLAMA_BASE_URL}/api/generate"
 
 # Vision settings
 ENABLE_VISION = True
-VISION_MODEL = "moondream:latest"  # or "moondream:v2"
+VISION_MODEL = "moondream"    # Updated to match README
 CAMERA_INDEX = 0  # 0 for default camera
 
 # faster-whisper settings
@@ -32,8 +33,12 @@ TTS_RATE = 160
 TTS_VOLUME = 0.9
 
 # Web Search settings
-ENABLE_WEB_SEARCH = False  # Set to False to disable web search
+ENABLE_WEB_SEARCH = True
 WEB_SEARCH_MAX_RESULTS = 3
+
+# Logging settings
+LOG_LEVEL = "INFO"
+LOG_FILE = "vani.log"
 
 # System prompt with web search capability
 SYSTEM_PROMPT = f"""You are {ASSISTANT_NAME}, a helpful AI voice assistant with web search capability.

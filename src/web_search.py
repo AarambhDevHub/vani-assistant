@@ -2,54 +2,49 @@
 
 from duckduckgo_search import DDGS
 from typing import Optional, List, Dict
-import requests
+import asyncio
 from datetime import datetime
 import wikipediaapi
-
+from .logger import logger
 
 class WebSearchHandler:
-    """Handles web searches with Wikipedia integration."""
+    """Handles web searches with Wikipedia integration (Async)."""
     
     def __init__(self):
-        self.ddgs = DDGS(timeout=20)  # Increased timeout
+        self.ddgs = DDGS(timeout=20)
         self.timeout = 10
-        self.headers = {
-            'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36'
-        }
         
         # Initialize Wikipedia API for different languages
         self.wiki_en = wikipediaapi.Wikipedia('Vani-Assistant/1.0', 'en')
         self.wiki_hi = wikipediaapi.Wikipedia('Vani-Assistant/1.0', 'hi')
         self.wiki_gu = wikipediaapi.Wikipedia('Vani-Assistant/1.0', 'gu')
         
-        print("✅ Web search enabled (DuckDuckGo + Wikipedia)")
+        logger.info("✅ Web search enabled (DuckDuckGo + Wikipedia)")
     
-    def search(self, query: str, max_results: int = 5) -> List[Dict[str, str]]:
+    async def search(self, query: str, max_results: int = 5) -> List[Dict[str, str]]:
         """
         Search the web for information with Wikipedia fallback.
-        
-        Args:
-            query: Search query
-            max_results: Maximum number of results to return
-            
-        Returns:
-            List of search results with title, snippet, and url
         """
         try:
-            print(f"🔍 Searching web: {query}")
+            logger.info(f"🔍 Searching web: {query}")
             
-            # First try DuckDuckGo
-            results = []
+            # Run blocking DDGS in executor
+            loop = asyncio.get_event_loop()
             
             try:
-                search_results = list(self.ddgs.text(
-                    query, 
-                    region='in-en',
-                    safesearch='moderate',
-                    timelimit='m',
-                    max_results=max_results
-                ))
+                # DuckDuckGo Search
+                search_results = await loop.run_in_executor(
+                    None, 
+                    lambda: list(self.ddgs.text(
+                        query, 
+                        region='in-en',
+                        safesearch='moderate',
+                        timelimit='m',
+                        max_results=max_results
+                    ))
+                )
                 
+                results = []
                 for result in search_results:
                     results.append({
                         'title': result.get('title', ''),
@@ -59,38 +54,34 @@ class WebSearchHandler:
                     })
                 
                 if results:
-                    print(f"✅ Found {len(results)} results (DuckDuckGo)")
+                    logger.info(f"✅ Found {len(results)} results (DuckDuckGo)")
                     return results
                     
             except Exception as e:
-                print(f"⚠️ DuckDuckGo search failed: {str(e)[:100]}")
+                logger.warning(f"⚠️ DuckDuckGo search failed: {str(e)[:100]}")
             
             # If DuckDuckGo fails or no results, try Wikipedia
-            print("📚 Trying Wikipedia...")
-            wiki_results = self._search_wikipedia(query)
+            logger.info("📚 Trying Wikipedia...")
+            wiki_results = await self._search_wikipedia(query)
             
             if wiki_results:
-                print(f"✅ Found Wikipedia article")
+                logger.info(f"✅ Found Wikipedia article")
                 return wiki_results
             
-            print("⚠️ No results found")
+            logger.warning("⚠️ No results found")
             return []
             
         except Exception as e:
-            print(f"❌ Search error: {e}")
+            logger.error(f"❌ Search error: {e}")
             return []
     
-    def _search_wikipedia(self, query: str, language: str = 'en') -> List[Dict[str, str]]:
-        """
-        Search Wikipedia for detailed information.
-        
-        Args:
-            query: Search query
-            language: Language code ('en', 'hi', 'gu')
-            
-        Returns:
-            List with Wikipedia article information
-        """
+    async def _search_wikipedia(self, query: str, language: str = 'en') -> List[Dict[str, str]]:
+        """Search Wikipedia for detailed information (Async wrapper)."""
+        loop = asyncio.get_event_loop()
+        return await loop.run_in_executor(None, self._search_wikipedia_sync, query, language)
+
+    def _search_wikipedia_sync(self, query: str, language: str = 'en') -> List[Dict[str, str]]:
+        """Synchronous Wikipedia search logic."""
         try:
             # Select appropriate Wikipedia instance
             if language == 'hi':
@@ -100,10 +91,8 @@ class WebSearchHandler:
             else:
                 wiki = self.wiki_en
             
-            # Clean query - remove question words
+            # Clean query
             clean_query = query.lower()
-            
-            # Remove common question patterns
             question_patterns = [
                 'what is ', 'what are ', 'who is ', 'who are ',
                 'tell me about ', 'explain ', 'describe ',
@@ -115,136 +104,88 @@ class WebSearchHandler:
             for pattern in question_patterns:
                 clean_query = clean_query.replace(pattern, '')
             
-            # Remove punctuation
-            clean_query = clean_query.strip().rstrip('?').strip()
+            clean_query = clean_query.strip().rstrip('?').strip().title()
             
-            # Capitalize first letter for better Wikipedia matching
-            clean_query = clean_query.title()
+            logger.info(f"📚 Searching Wikipedia for: '{clean_query}'")
             
-            print(f"📚 Searching Wikipedia for: '{clean_query}'")
-            
-            # Try exact match first
+            # Try exact match
             page = wiki.page(clean_query)
-            
             if page.exists():
-                summary = page.summary
-                
-                # Get first 4 sentences for a good summary
-                sentences = [s.strip() for s in summary.split('.') if s.strip()]
-                short_summary = '. '.join(sentences[:4]) + '.'
-                
-                return [{
-                    'title': page.title,
-                    'snippet': short_summary,
-                    'url': page.fullurl,
-                    'source': 'Wikipedia'
-                }]
+                return [self._format_wiki_page(page)]
             
-            # If exact match fails, try common variations
+            # Try variations
             variations = [
                 clean_query,
                 clean_query.lower(),
                 clean_query.replace(' ', '_'),
-                clean_query.split()[0] if ' ' in clean_query else clean_query  # First word
+                clean_query.split()[0] if ' ' in clean_query else clean_query
             ]
             
             for variation in variations:
                 try:
                     page = wiki.page(variation)
                     if page.exists():
-                        summary = page.summary
-                        sentences = [s.strip() for s in summary.split('.') if s.strip()]
-                        short_summary = '. '.join(sentences[:4]) + '.'
-                        
-                        print(f"✅ Found Wikipedia article: {page.title}")
-                        
-                        return [{
-                            'title': page.title,
-                            'snippet': short_summary,
-                            'url': page.fullurl,
-                            'source': 'Wikipedia'
-                        }]
+                        logger.info(f"✅ Found Wikipedia article: {page.title}")
+                        return [self._format_wiki_page(page)]
                 except:
                     continue
             
-            print(f"⚠️ No Wikipedia article found for '{clean_query}'")
+            logger.warning(f"⚠️ No Wikipedia article found for '{clean_query}'")
             return []
             
         except Exception as e:
-            print(f"❌ Wikipedia search error: {str(e)[:100]}")
+            logger.error(f"❌ Wikipedia search error: {str(e)[:100]}")
             return []
 
-    
-    def get_wikipedia_summary(self, topic: str, language: str = 'en', sentences: int = 3) -> Optional[str]:
-        """
-        Get detailed Wikipedia summary for a topic.
+    def _format_wiki_page(self, page) -> Dict[str, str]:
+        """Helper to format wiki page result."""
+        summary = page.summary
+        sentences = [s.strip() for s in summary.split('.') if s.strip()]
+        short_summary = '. '.join(sentences[:4]) + '.'
         
-        Args:
-            topic: Topic to search
-            language: Language code
-            sentences: Number of sentences to return
-            
-        Returns:
-            Summary text or None
-        """
-        try:
-            # Select Wikipedia instance
-            if language == 'hi':
-                wiki = self.wiki_hi
-            elif language == 'gu':
-                wiki = self.wiki_gu
-            else:
-                wiki = self.wiki_en
-            
-            page = wiki.page(topic)
-            
-            if page.exists():
-                summary = page.summary
-                summary_sentences = summary.split('.')
-                return '. '.join(summary_sentences[:sentences]) + '.'
-            
-            return None
-            
-        except Exception as e:
-            print(f"⚠️ Wikipedia summary error: {e}")
-            return None
+        return {
+            'title': page.title,
+            'snippet': short_summary,
+            'url': page.fullurl,
+            'source': 'Wikipedia'
+        }
     
-    def search_news(self, query: str, max_results: int = 5) -> List[Dict[str, str]]:
-        """Search for recent news articles."""
+    async def search_news(self, query: str, max_results: int = 5) -> List[Dict[str, str]]:
+        """Search for recent news articles (Async)."""
         try:
-            print(f"📰 Searching news: {query}")
+            logger.info(f"📰 Searching news: {query}")
             
-            results = []
+            loop = asyncio.get_event_loop()
             
-            try:
-                news_results = list(self.ddgs.news(
+            news_results = await loop.run_in_executor(
+                None,
+                lambda: list(self.ddgs.news(
                     query,
                     region='in-en',
                     safesearch='moderate',
                     timelimit='w',
                     max_results=max_results
                 ))
-                
-                for result in news_results:
-                    results.append({
-                        'title': result.get('title', ''),
-                        'snippet': result.get('body', ''),
-                        'url': result.get('url', ''),
-                        'date': result.get('date', ''),
-                        'source': result.get('source', 'News')
-                    })
-                
-                if results:
-                    print(f"✅ Found {len(results)} news articles")
-                    return results
-                    
-            except Exception as e:
-                print(f"⚠️ News search error: {str(e)[:100]}")
+            )
             
+            results = []
+            for result in news_results:
+                results.append({
+                    'title': result.get('title', ''),
+                    'snippet': result.get('body', ''),
+                    'url': result.get('url', ''),
+                    'date': result.get('date', ''),
+                    'source': result.get('source', 'News')
+                })
+            
+            if results:
+                logger.info(f"✅ Found {len(results)} news articles")
+                return results
+                
             return []
             
         except Exception as e:
-            print(f"❌ News search error: {e}")
+            logger.error(f"❌ News search error: {e}")
             return []
     
     def format_search_results(self, results: List[Dict[str, str]], language: str = 'en') -> str:
@@ -263,16 +204,13 @@ class WebSearchHandler:
             formatted.append("🌐 Search Results:\n")
         
         for i, result in enumerate(results, 1):
-            # Title
             if result.get('title'):
                 formatted.append(f"\n{i}. {result['title']}")
             
-            # Snippet
             if result.get('snippet'):
-                snippet = result['snippet'][:400]  # Limit length
+                snippet = result['snippet'][:400]
                 formatted.append(f"   {snippet}...")
             
-            # Metadata
             metadata = []
             if result.get('date'):
                 metadata.append(f"📅 {result['date']}")
@@ -283,11 +221,4 @@ class WebSearchHandler:
                 formatted.append(f"   {' | '.join(metadata)}")
         
         formatted.append("\n\n📝 Use this information to provide an accurate answer.\n")
-        
         return "\n".join(formatted)
-    
-    def get_current_time(self) -> str:
-        """Get current date and time."""
-        from datetime import datetime
-        now = datetime.now()
-        return now.strftime('%I:%M %p, %A, %B %d, %Y')

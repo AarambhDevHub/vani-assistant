@@ -31,3 +31,7 @@ pillow>=10.0.0
 
 # Vision & Camera
 opencv-python>=4.8.0
+
+# Async & Logging
+aiohttp>=3.9.0
+colorlog>=6.8.0

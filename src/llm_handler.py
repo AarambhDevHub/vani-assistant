@@ -1,15 +1,17 @@
-"""Ollama LLM integration with web search support."""
+"""Ollama LLM integration with web search support (Async)."""
 
-import requests
+import aiohttp
 import json
+import asyncio
 from typing import Optional
 from . import config
 from .web_search import WebSearchHandler
 from .desktop_automation import DesktopAutomation
 from .multi_model_handler import MultiModelHandler
+from .logger import logger
 
 class OllamaHandler:
-    """Handles communication with Ollama API with web search capability."""
+    """Handles communication with Ollama API with web search capability (Async)."""
     
     def __init__(self):
         self.base_url = config.OLLAMA_BASE_URL
@@ -21,38 +23,42 @@ class OllamaHandler:
         # Initialize web search
         self.web_search = WebSearchHandler()
         
-        # Desktop automation (single unified system)
+        # Desktop automation
         self.desktop = DesktopAutomation()
 
         # Multi-model system (vision + text)
         self.multi_model = MultiModelHandler()
         
-        # Verify Ollama is running
-        self._check_connection()
+    async def initialize(self):
+        """Async initialization to check connection."""
+        await self._check_connection()
+        await self.multi_model.initialize()
     
-    def _check_connection(self):
+    async def _check_connection(self):
         """Check if Ollama is running and model is available."""
         try:
-            response = requests.get(f"{self.base_url}/api/tags", timeout=5)
-            response.raise_for_status()
-            
-            models = response.json().get("models", [])
-            model_names = [m["name"] for m in models]
-            
-            if self.model not in model_names:
-                print(f"⚠️ Warning: Model '{self.model}' not found")
-                print(f"Available models: {', '.join(model_names)}")
-            else:
-                print(f"✅ Connected to Ollama - Using model: {self.model}")
-                
-        except requests.exceptions.RequestException as e:
-            print(f"❌ Cannot connect to Ollama: {e}")
-            print("Make sure Ollama is running: ollama serve")
-            raise
+            async with aiohttp.ClientSession() as session:
+                async with session.get(f"{self.base_url}/api/tags", timeout=5) as response:
+                    if response.status != 200:
+                        raise Exception(f"Ollama returned status {response.status}")
+                    
+                    data = await response.json()
+                    models = data.get("models", [])
+                    model_names = [m["name"] for m in models]
+                    
+                    if self.model not in model_names:
+                        logger.warning(f"⚠️ Warning: Model '{self.model}' not found")
+                        logger.info(f"Available models: {', '.join(model_names)}")
+                    else:
+                        logger.info(f"✅ Connected to Ollama - Using model: {self.model}")
+                        
+        except Exception as e:
+            logger.error(f"❌ Cannot connect to Ollama: {e}")
+            logger.info("Make sure Ollama is running: ollama serve")
+            # Don't raise, just log error to allow partial functionality
     
     def _needs_web_search(self, query: str) -> bool:
         """Determine if query needs web search for current information."""
-        
         query_lower = query.lower()
         
         # Explicit search keywords
@@ -61,7 +67,6 @@ class OllamaHandler:
             'खोजें', 'ढूंढें', 'सर्च',
             'શોધો', 'શોધ'
         ]
-        
         if any(keyword in query_lower for keyword in explicit_search):
             return True
         
@@ -71,7 +76,6 @@ class OllamaHandler:
             'समाचार', 'ख़बर', 'ताज़ा', 'आज',
             'સમાચાર', 'તાજા', 'આજે'
         ]
-        
         if any(keyword in query_lower for keyword in news_keywords):
             return True
         
@@ -85,7 +89,6 @@ class OllamaHandler:
             'मौसम', 'तापमान', 'कीमत', 'स्टॉक',
             'હવામાન', 'કિંમત', 'સ્ટોક'
         ]
-        
         if any(keyword in query_lower for keyword in time_sensitive):
             return True
         
@@ -96,13 +99,11 @@ class OllamaHandler:
             'क्या हो रहा', 'क्या हुआ', 'कौन है', 'वर्तमान',
             'શું થઈ રહ્યું', 'શું થયું', 'કોણ છે', 'વર્તમાન'
         ]
-        
         if any(pattern in query_lower for pattern in current_info_patterns):
             return True
         
         return False
 
-    
     def _is_knowledge_query(self, query: str) -> bool:
         """Detect if query is asking for factual knowledge (good for Wikipedia)."""
         knowledge_patterns = [
@@ -112,69 +113,56 @@ class OllamaHandler:
             'क्या है', 'कौन है', 'बताओ', 'समझाओ',
             'શું છે', 'કોણ છે', 'જણાવો', 'સમજાવો'
         ]
-        
         query_lower = query.lower()
         return any(pattern in query_lower for pattern in knowledge_patterns)
 
-    def generate_response(self, user_input: str, language: str = "en") -> Optional[str]:
-        """Generate response with intelligent source selection."""
+    async def generate_response(self, user_input: str, language: str = "en") -> Optional[str]:
+        """Generate response with intelligent source selection (Async)."""
         try:
             self.current_language = language
 
-            # 1. Check for vision commands first
-            vision_response = self.multi_model.process_vision_command(user_input, language)
-            
+            # 1. Check for vision commands
+            vision_response = await self.multi_model.process_vision_command(user_input, language)
             if vision_response:
-                print(f"👁️  {vision_response}")
+                logger.info(f"👁️  {vision_response}")
                 return vision_response
 
-            # Try desktop command first
-            desktop_response = self.desktop.execute(user_input, language)
-            
+            # 2. Try desktop command (TODO: Make async)
+            desktop_response = await self.desktop.execute(user_input, language)
             if desktop_response:
-                print(f"🖥️  {desktop_response}")
+                logger.info(f"🖥️  {desktop_response}")
                 return desktop_response
             
             web_context = ""
             if config.ENABLE_WEB_SEARCH:
-                # Determine search type
                 is_news = self._needs_web_search(user_input) and any(
                     word in user_input.lower() 
                     for word in ['news', 'latest', 'recent', 'समाचार', 'સમાચાર']
                 )
-                
                 is_knowledge = self._is_knowledge_query(user_input)
                 
+                search_results = []
                 if is_news:
-                    # News search
-                    print("📰 Searching for news...")
-                    search_results = self.web_search.search_news(user_input, max_results=5)
+                    logger.info("📰 Searching for news...")
+                    search_results = await self.web_search.search_news(user_input, max_results=5)
                 elif is_knowledge:
-                    # Try Wikipedia first for knowledge queries
-                    print("📚 Checking Wikipedia...")
-                    search_results = self.web_search._search_wikipedia(user_input, language)
-                    
-                    # If Wikipedia has no results, try web search
+                    logger.info("📚 Checking Wikipedia...")
+                    search_results = await self.web_search._search_wikipedia(user_input, language)
                     if not search_results:
-                        print("🔍 Wikipedia not found, trying web search...")
-                        search_results = self.web_search.search(user_input, max_results=5)
+                        logger.info("🔍 Wikipedia not found, trying web search...")
+                        search_results = await self.web_search.search(user_input, max_results=5)
                 elif self._needs_web_search(user_input):
-                    # Regular web search
-                    print("🌐 Searching web...")
-                    search_results = self.web_search.search(user_input, max_results=5)
-                else:
-                    search_results = []
+                    logger.info("🌐 Searching web...")
+                    search_results = await self.web_search.search(user_input, max_results=5)
                 
                 if search_results:
-                    web_context = self.web_search.format_search_results(
-                        search_results,
-                        language
-                    )
-                    print(f"✅ Using {len(search_results)} search results")
+                    web_context = self.web_search.format_search_results(search_results, language)
+                    logger.info(f"✅ Using {len(search_results)} search results")
                 else:
-                    print("⚠️ No search results, using general knowledge")
+                    if is_news or self._needs_web_search(user_input):
+                        logger.warning("⚠️ No search results, using general knowledge")
             
-            # Build prompt and generate response
+            # Build prompt
             prompt = self._build_prompt(user_input, language, web_context)
             
             # API request payload
@@ -185,21 +173,20 @@ class OllamaHandler:
                 "options": {
                     "temperature": 0.7,
                     "top_p": 0.9,
-                    "num_predict": 200
+                    "num_predict": 500
                 }
             }
             
-            print("🤔 Thinking...")
+            logger.info("🤔 Thinking...")
             
-            response = requests.post(
-                self.api_endpoint,
-                json=payload,
-                timeout=60
-            )
-            response.raise_for_status()
-            
-            result = response.json()
-            assistant_response = result.get("response", "").strip()
+            async with aiohttp.ClientSession() as session:
+                async with session.post(self.api_endpoint, json=payload, timeout=60) as response:
+                    if response.status != 200:
+                        logger.error(f"❌ API error: {response.status}")
+                        return None
+                        
+                    result = await response.json()
+                    assistant_response = result.get("response", "").strip()
             
             if assistant_response:
                 # Update conversation history
@@ -214,25 +201,21 @@ class OllamaHandler:
                     "language": language
                 })
                 
-                # Keep only last 6 exchanges
-                if len(self.conversation_history) > 12:
-                    self.conversation_history = self.conversation_history[-12:]
+                # Keep only last 20 exchanges
+                if len(self.conversation_history) > 20:
+                    self.conversation_history = self.conversation_history[-20:]
                 
-                print(f"💬 Assistant: {assistant_response}")
+                logger.info(f"💬 Assistant: {assistant_response}")
                 return assistant_response
             else:
-                print("⚠️ Empty response from model")
+                logger.warning("⚠️ Empty response from model")
                 return None
                 
-        except requests.exceptions.RequestException as e:
-            print(f"❌ API error: {e}")
-            return None
         except Exception as e:
-            print(f"❌ Unexpected error: {e}")
+            logger.error(f"❌ Unexpected error: {e}")
             import traceback
             traceback.print_exc()
             return None
-
     
     def _build_prompt(self, user_input: str, language: str, web_context: str = "") -> str:
         """Build prompt with language instruction, web context, and conversation history."""
@@ -241,7 +224,6 @@ class OllamaHandler:
         assistant_name_hi = config.ASSISTANT_NAME_HI
         assistant_name_gu = config.ASSISTANT_NAME_GU
         
-        # Enhanced language-specific system prompts with web search capability
         language_instructions = {
             "en": f"""You are {assistant_name}, a helpful AI voice assistant with web search capability.
 Respond ONLY in clear, natural English. Keep responses brief and conversational.
@@ -264,31 +246,21 @@ Cite sources when using web information.""",
         
         prompt_parts = [system_instruction, "\n\n"]
         
-        # Add web search context if available
         if web_context:
             prompt_parts.append(web_context)
             prompt_parts.append("\n\nUse the above web search information to answer the question.\n\n")
         
-        # Add conversation history
         for message in self.conversation_history[-6:]:
             if message.get("language") == language:
                 role = message["role"]
                 content = message["content"]
-                
                 if role == "user":
                     prompt_parts.append(f"User: {content}\n")
                 else:
-                    prompt_parts.append(f"{assistant_name}: {content}\n")
+                    prompt_parts.append(f"Assistant: {content}\n")
         
-        # Add current user input
         prompt_parts.append(f"User: {user_input}\n")
-        
-        if language == "hi":
-            prompt_parts.append(f"{assistant_name_hi} (हिंदी में उत्तर दें): ")
-        elif language == "gu":
-            prompt_parts.append(f"{assistant_name_gu} (ગુજરાતીમાં જવાબ આપો): ")
-        else:
-            prompt_parts.append(f"{assistant_name}: ")
+        prompt_parts.append("Assistant: ")
         
         return "".join(prompt_parts)
     
@@ -296,4 +268,4 @@ Cite sources when using web information.""",
         """Clear conversation history."""
         self.conversation_history = []
         self.current_language = "en"
-        print("🔄 Conversation history cleared")
+        logger.info("🔄 Conversation history cleared")

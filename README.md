@@ -51,6 +51,7 @@
 - **Smart Command Understanding** - Natural language commands
 
 ### Technical Highlights
+- **Async Architecture** - Fully non-blocking I/O for smoother performance 🆕
 - **Multi-Model Architecture** - Moondream (vision) + Llama 3.2 (text)
 - **Smart Command Detection** - Auto-activates camera when needed
 - **Vision Context Memory** - Remembers what it saw for follow-up questions
@@ -58,6 +59,7 @@
 - **Intelligent URL Parsing** - Understands complex commands
 - **Real-time Processing** with minimal latency
 - **Optimized for Consumer Hardware** (8GB RAM, integrated GPU)
+- **Centralized Logging** - Colored console output and file logging 🆕
 - **Production-Ready** with error handling and recovery
 
 ### What Can Vani Do?
@@ -453,6 +455,8 @@ SpeechRecognition>=3.10.0
 sounddevice>=0.4.6
 requests>=2.31.0
 pyaudio>=0.2.14
+aiohttp>=3.9.0
+colorlog>=6.8.0
 
 # Whisper dependencies
 torch>=2.0.0

@@ -1,23 +1,24 @@
-"""Main application entry point."""
+"""Main application entry point (Async)."""
 
 import sys
 import signal
-from .audio_utils import AudioRecorder, AudioPlayer
+import asyncio
+from .audio_utils import AudioRecorder
 from .stt_handler import SpeechRecognizer
 from .llm_handler import OllamaHandler
 from .tts_google import TextToSpeechGoogle as TextToSpeech
 from . import config
-
+from .logger import logger
 
 class VoiceAssistant:
-    """Main voice assistant application."""
+    """Main voice assistant application (Async)."""
     
     def __init__(self):
-        # Get assistant name based on system language
-        assistant_name = config.ASSISTANT_NAME
+        self.running = True
+        self.assistant_name = config.ASSISTANT_NAME
         
-        print(f"🚀 Initializing {assistant_name} - Your AI Voice Assistant...")
-        print("=" * 50)
+        logger.info(f"🚀 Initializing {self.assistant_name} - Your AI Voice Assistant...")
+        logger.info("=" * 50)
         
         try:
             self.audio_recorder = AudioRecorder()
@@ -25,42 +26,42 @@ class VoiceAssistant:
             self.llm_handler = OllamaHandler()
             self.tts = TextToSpeech()
             
-            print("=" * 50)
-            print(f"✅ {assistant_name} is ready to help!")
-            print()
+            logger.info("=" * 50)
+            logger.info(f"✅ {self.assistant_name} is ready to help!")
             
         except Exception as e:
-            print(f"❌ Initialization failed: {e}")
+            logger.critical(f"❌ Initialization failed: {e}")
             sys.exit(1)
+            
+    async def initialize(self):
+        """Async initialization of components."""
+        await self.llm_handler.initialize()
     
-    def run(self):
+    async def run(self):
         """Run the main assistant loop."""
-        assistant_name = config.ASSISTANT_NAME
-        
         print("🎯 Commands:")
-        print(f"  - Speak to {assistant_name} in English, Hindi, or Gujarati")
+        print(f"  - Speak to {self.assistant_name} in English, Hindi, or Gujarati")
         print("  - Say 'exit', 'quit', or 'goodbye' to stop")
         print("  - Say 'reset' to clear conversation history")
-        print(f"  - Say 'who are you' to learn about {assistant_name}")
+        print(f"  - Say 'who are you' to learn about {self.assistant_name}")
         print("  - Press Ctrl+C to force quit")
         print()
         
-        # Setup signal handler for graceful exit
-        signal.signal(signal.SIGINT, self._signal_handler)
+        await self.initialize()
         
-        while True:
+        while self.running:
             try:
-                # Play beep to indicate ready to listen
+                # Play beep
                 self.audio_recorder.play_beep()
                 
-                # Record audio
-                audio = self.audio_recorder.record_audio()
+                # Record audio (Async)
+                audio = await self.audio_recorder.record_audio()
                 
                 if audio is None:
                     continue
                 
-                # Transcribe speech to text and get language
-                result = self.speech_recognizer.transcribe(audio)
+                # Transcribe (Async)
+                result = await self.speech_recognizer.transcribe(audio)
                 
                 if result is None:
                     continue
@@ -69,40 +70,39 @@ class VoiceAssistant:
                 
                 # Check for identity questions
                 if self._is_identity_question(text):
-                    self._introduce(detected_language)
+                    await self._introduce(detected_language)
                     continue
                 
                 # Check for exit commands
                 if self._is_exit_command(text):
                     goodbye_msg = {
-                        'en': f'Goodbye! {assistant_name} signing off.',
+                        'en': f'Goodbye! {self.assistant_name} signing off.',
                         'hi': f'अलविदा! {config.ASSISTANT_NAME_HI} विदा ले रही है।',
                         'gu': f'આવજો! {config.ASSISTANT_NAME_GU} જતી રહી છે.'
                     }.get(detected_language, 'Goodbye!')
                     
-                    self.tts.speak(goodbye_msg, detected_language)
-                    print("👋 Exiting...")
+                    await self.tts.speak(goodbye_msg, detected_language)
+                    logger.info("👋 Exiting...")
+                    self.running = False
                     break
                 
                 # Check for reset command
                 if self._is_reset_command(text):
                     self.llm_handler.reset_conversation()
-                    
                     reset_msg = {
                         'en': 'Conversation history cleared',
                         'hi': 'बातचीत का इतिहास साफ़ हो गया',
                         'gu': 'વાતચીત ઇતિહાસ સાફ થયો'
                     }.get(detected_language, 'Conversation history cleared')
                     
-                    self.tts.speak(reset_msg, detected_language)
+                    await self.tts.speak(reset_msg, detected_language)
                     continue
                 
-                # Generate response in the detected language
-                response = self.llm_handler.generate_response(text, detected_language)
+                # Generate response (Async)
+                response = await self.llm_handler.generate_response(text, detected_language)
                 
                 if response:
-                    # Speak the response IN THE SAME LANGUAGE
-                    self.tts.speak(response, detected_language)
+                    await self.tts.speak(response, detected_language)
                 else:
                     error_msg = {
                         'en': "I'm sorry, I couldn't process that",
@@ -110,23 +110,20 @@ class VoiceAssistant:
                         'gu': 'માફ કરશો, હું તેને પ્રક્રિયા કરી શક્યો નહીં'
                     }.get(detected_language, "I'm sorry, I couldn't process that")
                     
-                    self.tts.speak(error_msg, detected_language)
+                    await self.tts.speak(error_msg, detected_language)
                 
                 print()
                 
-            except KeyboardInterrupt:
-                print("\n👋 Interrupted by user")
+            except asyncio.CancelledError:
+                logger.info("\n👋 Interrupted by user")
                 break
             except Exception as e:
-                print(f"❌ Error: {e}")
-                import traceback
-                traceback.print_exc()
+                logger.error(f"❌ Error: {e}")
                 continue
         
-        print(f"✅ {assistant_name} stopped")
+        logger.info(f"✅ {self.assistant_name} stopped")
     
     def _is_identity_question(self, text: str) -> bool:
-        """Check if user is asking about the assistant's identity."""
         identity_phrases = [
             'who are you', 'what is your name', 'your name',
             'तुम कौन हो', 'तुम्हारा नाम क्या है',
@@ -135,19 +132,16 @@ class VoiceAssistant:
         text_lower = text.lower()
         return any(phrase in text_lower for phrase in identity_phrases)
     
-    def _introduce(self, language: str):
-        """Introduce the assistant."""
+    async def _introduce(self, language: str):
         introductions = {
             'en': f"I am {config.ASSISTANT_NAME}, your multilingual AI voice assistant. I can help you in English, Hindi, and Gujarati!",
             'hi': f"मैं {config.ASSISTANT_NAME_HI} हूं, आपकी बहुभाषी AI आवाज सहायक। मैं अंग्रेजी, हिंदी और गुजराती में आपकी मदद कर सकती हूं!",
             'gu': f"હું {config.ASSISTANT_NAME_GU} છું, તમારી બહુભાષી AI વૉઇસ આસિસ્ટન્ટ. હું અંગ્રેજી, હિન્દી અને ગુજરાતીમાં તમારી મદદ કરી શકું છું!"
         }
-        
         intro = introductions.get(language, introductions['en'])
-        self.tts.speak(intro, language)
+        await self.tts.speak(intro, language)
     
     def _is_exit_command(self, text: str) -> bool:
-        """Check if text is an exit command (multilingual)."""
         exit_words = [
             'exit', 'quit', 'goodbye', 'bye', 'stop',
             'बाहर निकलें', 'बंद करो', 'अलविदा', 'बाय',
@@ -157,7 +151,6 @@ class VoiceAssistant:
         return any(word in text_lower for word in exit_words)
     
     def _is_reset_command(self, text: str) -> bool:
-        """Check if text is a reset command."""
         reset_words = [
             'reset', 'clear history', 'start over',
             'रीसेट', 'इतिहास साफ़ करें',
@@ -165,19 +158,15 @@ class VoiceAssistant:
         ]
         text_lower = text.lower()
         return any(word in text_lower for word in reset_words)
-    
-    def _signal_handler(self, sig, frame):
-        """Handle Ctrl+C gracefully."""
-        print(f"\n\n👋 {config.ASSISTANT_NAME} shutting down...")
-        self.tts.stop()
-        sys.exit(0)
-
 
 def main():
     """Entry point."""
     assistant = VoiceAssistant()
-    assistant.run()
-
+    
+    try:
+        asyncio.run(assistant.run())
+    except KeyboardInterrupt:
+        pass
 
 if __name__ == "__main__":
     main()
